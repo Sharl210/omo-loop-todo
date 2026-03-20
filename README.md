@@ -49,7 +49,7 @@ mkdir -p ~/.config/opencode/skills/loop-todo
 ### 使用
 
 ```
-你: 帮我把这个模块重构一下，loop 一下
+你: 帮我把这个模块重构一下，loop-todo
 ```
 
 就这样。Agent 会一直 loop，直到你说 `stop` 或 `停止`。
