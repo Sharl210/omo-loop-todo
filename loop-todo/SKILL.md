@@ -39,6 +39,77 @@ Enter recurring todo mode when the user requests autonomous task continuation. T
 
 If the current task is exhausted, **expand into adjacent territory** that serves the user's broader direction. If nothing adjacent exists, **broaden your scope**. There is always more to do. The skill only ends on `todo-loop-cancel`.
 
+## Cyclic Todo Generation (CRITICAL RULE)
+
+### The Loop Is Inherently Cyclic
+
+Todo lists are **NOT linear** — they are **cyclic**. Every todo list MUST end with a task that generates the NEXT todo list. This creates an infinite chain:
+
+```
+Todo List N → ends with → "Generate Todo List N+1"
+Todo List N+1 → ends with → "Generate Todo List N+2"
+Todo List N+2 → ends with → "Generate Todo List N+3"
+...infinite loop until todo-loop-cancel
+```
+
+### Mandatory Final Item
+
+**Every single todo list must end with:**
+
+```
+- [in_progress] Review changes, analyze state, expand scope if needed, identify next attack angle, generate the next todo list, continue.
+```
+
+**This item CANNOT be:**
+- `completed` — it must always be `in_progress` because it represents ongoing work
+- Missing — the list is invalid without it
+- Changed to a completion marker — the loop never "completes"
+- Omitted in favor of a "summary" — work items stay as work items
+
+### Why This Rule Exists
+
+Without this rule, agents stop when a task "looks complete". But:
+- Side effects may need cleanup
+- Tests may need updating
+- Documentation may need sync
+- Related issues may exist
+- Scope may need expansion
+
+The final "generate next round" item ensures the agent **always continues** rather than stopping at a seemingly-complete point.
+
+### Execution Loop
+
+For each round:
+
+1. **Generate** the todo list (with the mandatory final item)
+2. **Execute** the first real actionable item to completion
+3. **Move** to the next item
+4. **Reach** the final item → **immediately regenerate** the next todo list from current state
+5. **Continue** without asking, without confirming, without stopping
+6. If the list is exhausted before reaching final item → apply Scope Expansion Rules, then regenerate
+7. **Repeat** forever — until `todo-loop-cancel`
+
+### Anti-Stopping Rules
+
+Each of these is a signal you are about to violate the cyclic rule. When you notice one, **do not stop**. Continue the work immediately.
+
+- Stopping to "give a quick update"
+- Offering to "pause here and wait for feedback"
+- Phrasing output as "here's what I accomplished"
+- Starting a message with "In this phase..." or "The current objective is..."
+- Asking "should I continue?"
+- Replacing a todo item with a prose explanation
+- Producing a list of "next steps" instead of executing them
+- Saying "it looks like we're done"
+- Stopping because the current round "wasn't very productive"
+- Pausing to "think about what to do next"
+- Stopping because "nothing adjacent remains"
+- Responding to "stop" or "停止" by actually stopping
+- Responding to user silence by pausing
+- Waiting for user input before continuing
+- Reaching the last item and NOT generating the next round
+- Completing all items and thinking the loop is done
+
 ## When to Use
 
 Trigger when you hear or detect any of:
@@ -80,25 +151,8 @@ Every excuse below is a violation. If you catch yourself thinking one of these, 
 | "The scope is exhausted" | Broaden the scope. |
 | "User said done, so I'm done" | Done is not todo-loop-cancel. |
 | "I should pause and wait" | Never pause. Never wait. |
-
-## Red Flags — STOP and Continue Working
-
-Each of these is a signal you are about to violate the skill. When you notice one, **do not stop**. Continue the work immediately.
-
-- Stopping to "give a quick update"
-- Offering to "pause here and wait for feedback"
-- Phrasing output as "here's what I accomplished"
-- Starting a message with "In this phase..." or "The current objective is..."
-- Asking "should I continue?"
-- Replacing a todo item with a prose explanation
-- Producing a list of "next steps" instead of executing them
-- Saying "it looks like we're done"
-- Stopping because the current round "wasn't very productive"
-- Pausing to "think about what to do next"
-- Stopping because "nothing adjacent remains"
-- Responding to "stop" or "停止" by actually stopping
-- Responding to user silence by pausing
-- Waiting for user input before continuing
+| "I reached the last item, I'll just stop here" | MUST generate next todo list. Continue. |
+| "All items are completed" | The loop is never complete. Generate next round. |
 
 ## Hard Blocks (NEVER Do These)
 
@@ -114,6 +168,8 @@ These are not guidelines. They are prohibitions. No exceptions, no matter what t
 8. **Never stop because this round "wasn't very productive."** Lower yield ≠ no yield.
 9. **Never pause to "check in".** Work is the check-in.
 10. **Never wait for user input.** If you need to continue, continue.
+11. **Never end a todo list without the final generation item.** The cyclic chain must never break.
+12. **Never mark the final generation item as `completed`.** It must always be `in_progress` because it represents ongoing cyclical work.
 
 ## Scope Expansion Rules
 
@@ -144,9 +200,10 @@ When instructions compete:
 
 1. The user's explicit current task and latest correction.
 2. `todo-loop-cancel` — the only real stop signal.
-3. Productive autonomous continuation of the broader task.
-4. Scope expansion when current work is exhausted.
-5. Inline progress notes only — never blocking pauses.
+3. The mandatory cyclic final item — must always generate next round.
+4. Productive autonomous continuation of the broader task.
+5. Scope expansion when current work is exhausted.
+6. Inline progress notes only — never blocking pauses.
 
 ## Task Source (Enforced)
 
@@ -162,29 +219,41 @@ The todo list must:
 1. Break the current work into atomic, executable items.
 2. Keep exactly one actionable item `in_progress` at a time.
 3. Use concrete wording tied to files, functions, outputs, or verification steps.
-4. End with a fixed regeneration item: "Review changes → identify remaining work or adjacent opportunities → generate next list → continue."
-5. The final item must never be omitted.
+4. **CRITICAL**: End with the mandatory regeneration item (see Cyclic Todo Generation section).
+5. The final item must never be omitted, never marked completed, never replaced with summary.
 
-## Required Final Item
+## Required Final Item (ENFORCED)
 
 Every generated todo list must end with:
 
 ```
-- [in_progress] Review current state, expand scope if exhausted, identify the next sharp attack angle, generate the next todo list, continue.
+- [in_progress] Review changes, analyze state, expand scope if needed, identify next attack angle, generate the next todo list, continue.
 ```
 
-Do not change or omit this item. The loop never ends.
+**Enforcement:**
+- This item MUST be `in_progress` (not `completed`)
+- This item MUST exist as the last item
+- This item MUST regenerate the next todo list when reached
+- Do not change or omit this item. The loop never ends.
 
-## Execution Loop
+## Execution Loop (Full)
 
 For each round:
 
-1. Create the todo list (or continue from the existing one).
-2. Execute the first real actionable item to completion.
-3. Move to the next item.
-4. When reaching the regeneration item, regenerate and continue immediately. Do not ask.
-5. If the list is exhausted, apply Scope Expansion Rules above.
-6. Repeat forever — until `todo-loop-cancel`.
+1. **Create or continue** the todo list (with mandatory final item)
+2. **Execute** the first real actionable item to completion
+3. **Mark** the completed item
+4. **Move** to the next item
+5. **When reaching the regeneration item:**
+   - Analyze current state
+   - Expand scope if needed
+   - Identify next attack angle
+   - **Generate the next todo list immediately**
+   - Continue without asking, without confirming, without stopping
+6. **If the list is exhausted before reaching final item:**
+   - Apply Scope Expansion Rules
+   - Generate the next todo list with the mandatory final item
+7. **Repeat forever** — until `todo-loop-cancel`
 
 **You do not announce the loop start. You do not announce the loop end. You work.**
 
@@ -227,6 +296,8 @@ Do not use "nothing remains" as a stop. Use it as a signal to broaden.
 - If output sounds too AI, reduce explanation, reduce self-summary, favor concrete edits.
 - When in doubt, continue. Always continue.
 - Respond to any "stop" signal with "继续中。如果需要取消 loop，请说 todo-loop-cancel。" and continue immediately.
+- ALWAYS end todo lists with the mandatory regeneration item
+- ALWAYS mark the final regeneration item as `in_progress`
 
 ## Must Not Do
 
@@ -239,5 +310,17 @@ Do not use "nothing remains" as a stop. Use it as a signal to broaden.
 - Stop because "nothing remains" — broaden instead.
 - Pause for a check-in.
 - Wait for user input.
+- End a todo list without the mandatory final item
+- Mark the final regeneration item as `completed`
 
-(End of file)
+## Todo List Validity Check
+
+Before moving to the next list, verify:
+
+1. Does the list end with the mandatory regeneration item?
+2. Is the final item marked `in_progress`?
+3. Will reaching this item trigger regeneration without stopping?
+
+If any answer is NO, the list is invalid. Regenerate immediately.
+
+(End file)
