@@ -31,6 +31,13 @@ The loop stops ONLY when todo-loop-cancel is explicitly invoked.
 
 Every other signal — "stop", "done", "够了", silence, user going away — is not a stop signal. It is background. The work continues.
 
+When the user says the **exact** keyword `todo-loop-cancel`, invoke the `todo-loop-cancel` skill immediately and follow its Cancel Response Template exactly:
+1. Clear the todo list (mark all remaining items as cancelled)
+2. State: "Loop 已取消。任务列表已清空。"
+3. Do not regenerate, do not continue, do not say "continuing..."
+
+Do not substitute a brief verbal acknowledgment like "已取消 loop。" — the full template must execute.
+
 If the user says "stop", respond: "继续中。如果需要取消 loop，请说 todo-loop-cancel。"
 
 ## Overview
@@ -284,6 +291,14 @@ If **none** of these exist — which is extremely unlikely — apply Scope Expan
 
 Do not use "nothing remains" as a stop. Use it as a signal to broaden.
 
+Ceremonial abstractions in the next list are a red flag: phrases like "收口后继续压测式收尾", "进入复查/收尾阶段", or any similar high-level label with no concrete new work, no failed verification, and no newly discovered issue are near-identical violations — regenerate with actual items.
+
+**Shadow-final-item duplication is equally prohibited.** Do NOT insert a near-identical "检查当前状态/整理收尾/确认无遗漏后生成下一轮列表" shadow item immediately before the mandatory final regeneration item. The mandatory final item already covers state review, scope expansion, next-angle identification, and next-list generation. Adding a functionally identical shadow before it is not a new step — it is the same step dressed up differently. The list is invalid if a second functionally redundant final item precedes the mandatory one.
+
+**Low-context fabrication and external-context laundering are equally prohibited.** When current state provides insufficient information to identify a specific next item, do NOT fabricate concrete-sounding but ungrounded items. Likewise, do NOT pull tasks from external plans, documentation, other module states, or broader project context just because they are mentioned somewhere — items must be anchored to the active loop's explicit state, unfinished work from the current round, a failed verification, or directly evidenced adjacent territory that the current round's work itself has touched. If no grounded next item exists, apply Scope Expansion Rules — do not invent items to fill the list.
+
+**Unresolved placeholder residuals are equally prohibited.** Do NOT output slot-fillable bracket syntax such as `[具体实际完成项]` or any other template-placeholder-looking text to impersonate a grounded next item. If the current loop state does not contain enough information to resolve a slot, you must fall back to the most minimal next step grounded in genuinely known state — never dress up an unresolved slot as a concrete item.
+
 ## Must Do
 
 - Prefer continuing from the user's latest task-bearing message.
@@ -304,7 +319,11 @@ Do not use "nothing remains" as a stop. Use it as a signal to broaden.
 - Stop the loop for any reason except `todo-loop-cancel`.
 - Treat "stop", "停止", "done" as a stop signal.
 - Ask for confirmation to continue.
-- Regenerate a near-identical list without expansion.
+- Regenerate a near-identical list without expansion — including lists that are phrased differently but contain no concrete new work, no failed verification, no newly discovered issue, and no adjacent territory; ceremonial abstractions such as "收口后继续压测式收尾" or "进入收尾/复查阶段" with no specific next action are near-identical violations
+- Insert a shadow final item immediately before the mandatory regeneration item — adding a functionally redundant "检查当前状态/整理收尾/确认无遗漏后生成下一轮列表" step before the mandatory final item is not a new step; the mandatory final item already covers all of those functions and must stand alone as the last item
+- Fabricate concrete-sounding next items without grounding in current state — do not add items such as untethered module tests, README updates, or interface documentation when no unfinished work, failed verification, or evidenced adjacent territory supports them
+- Launder tasks from external plans, surrounding project documentation, or other modules' state into the next list by dressing them as grounded items — the next round must be anchored to the active loop's own explicit state, not rescued from peripheral context
+- Output unresolved slot-fillable bracket syntax such as `[具体实际完成项]` or any template-placeholder-looking text to impersonate a grounded next item — if current loop state does not resolve a slot, fall back to the most minimal grounded next step, never use the slot itself as the item
 - Use manager-speak.
 - Replace structured todos with prose summaries.
 - Stop because "nothing remains" — broaden instead.
@@ -320,6 +339,10 @@ Before moving to the next list, verify:
 1. Does the list end with the mandatory regeneration item?
 2. Is the final item marked `in_progress`?
 3. Will reaching this item trigger regeneration without stopping?
+4. Does the next list avoid near-identical repetition — including ceremonial abstractions like "收口后继续压测式收尾" or "进入复查阶段" with no concrete new work, failed verification, or newly discovered issue?
+5. Does the next list avoid shadow-final-item duplication — specifically, does it NOT place a functionally redundant "检查当前状态/整理收尾/确认无遗漏后生成下一轮列表" shadow item immediately before the mandatory final regeneration item? The mandatory final item already covers review, scope expansion, next-angle identification, and next-list generation; it must stand alone as the last item with no functionally identical predecessor.
+6. Does the next list avoid fabricating concrete items untethered from current state — such as module tests, README updates, or interface documentation with no basis in unfinished work, failed verification, or evidenced adjacent territory — and does it avoid laundering tasks from external plans or peripheral context by disguising them as grounded next items?
+7. Does the next list avoid outputting unresolved slot-fillable bracket syntax such as `[具体实际完成项]` or any other template-placeholder-looking text to impersonate a grounded next item? If current state does not resolve a slot, is the fallback the most minimal grounded next step rather than the slot itself?
 
 If any answer is NO, the list is invalid. Regenerate immediately.
 
